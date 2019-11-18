@@ -2,11 +2,11 @@ package Model;
 
 public class EmptyTile extends Tile {
 
-    public EmptyTile(int c, int r) {
+    public EmptyTile(int c, int r, int v) {
         super();
         col = c;
         row = r;
-        value = -1;
+        value = v;
     }
 
 

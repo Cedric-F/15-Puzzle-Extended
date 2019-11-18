@@ -1,10 +1,10 @@
 package Controller;
 
-import Model.Replay;
+import Model.PopUp;
 import Model.Tile;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
 import Model.EmptyTile;
@@ -18,6 +18,8 @@ import java.util.stream.IntStream;
 
 public class GridController {
     @FXML   private GridPane grid;
+    private int dim;
+    private List<Integer> checker;
 
     /**
      * Initialize the grid
@@ -25,23 +27,27 @@ public class GridController {
 
     @FXML   void initialize() {
         grid.getChildren().removeAll();
+        dim = PopUp.setSize();
+        checker = IntStream.range(1, (int) Math.pow(dim, 2) + 1).boxed().collect(Collectors.toList());
+        grid.setMaxWidth(dim * 50);
+        grid.setMaxHeight(dim * 50);
         grid.getStyleClass().add("grid");
 
         /* ---- Randomly set the empty cell position ---- */
         Random dice = new Random();
 
-        int randomCol = dice.nextInt(4);
-        int randomRow = dice.nextInt(4);
+        int randomCol = dice.nextInt(dim);
+        int randomRow = dice.nextInt(dim);
 
-        EmptyTile empty = new EmptyTile(randomCol, randomRow);
+        EmptyTile empty = new EmptyTile(randomCol, randomRow, (int) Math.pow(dim, 2));
         empty.getStyleClass().add("empty");
 
         /* ---- Generate a list of numbers from 1 to 24 ---- */
-        List<Integer> numbers = IntStream.range(1, 25).boxed().collect(Collectors.toList());
+        List<Integer> numbers = IntStream.range(1, (int) Math.pow(dim, 2)).boxed().collect(Collectors.toList());
 
         /* ---- Fill the grid with cells, and give them a random item from the list of numbers above ---- */
-        for (int col = 0; col < 5; col++) {
-            for (int row = 0; row < 5; row++) {
+        for (int col = 0; col < dim; col++) {
+            for (int row = 0; row < dim; row++) {
                 if (col == randomCol && row == randomRow) { // place the cell when reaching it's coordinates
                     grid.add(empty, randomCol, randomRow);
                 } else { // place all the other cells
@@ -97,11 +103,34 @@ public class GridController {
             empty.setRow(row);
             empty.setCol(col);
             grid.add(empty, empty.getCol(), empty.getRow());
+            checkConfig(col, row);
         }
         /*
          * TODO: Swap a whole line
          * TODO: Display replay popup
          */
 
+    }
+
+    private void checkConfig(int row, int col) {
+        if (row == dim - 1 && col == dim - 1) {
+            int[][] matrix = new int[dim][dim];
+
+            List<Object> nodes = Arrays.asList(grid.getChildren().toArray());
+
+            for (Object o : nodes)
+                matrix[((Tile) o).getRow()][((Tile) o).getCol()] = ((Tile) o).getValue();
+
+            if (Arrays.toString(Arrays.stream(matrix).flatMapToInt(Arrays::stream).toArray()).equals(Arrays.toString(checker.toArray()))) {
+                if (replay())
+                    initialize();
+                else
+                    Platform.exit();
+            }
+        }
+    }
+
+    private boolean replay() {
+        return PopUp.replay();
     }
 }
