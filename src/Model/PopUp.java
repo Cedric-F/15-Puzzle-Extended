@@ -1,9 +1,6 @@
 package Model;
 
-import Controller.GridController;
-import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -18,6 +15,13 @@ public class PopUp {
 
     private static boolean answer;
     private static int dimensions;
+
+    /**
+     * Pop up modal to offer a rematch when the user won the last game
+     * If triggered from the menu, the modal doesn't show and restart the game directly
+     * @param won defines where the trigger comes from
+     * @return true if starting a new game, or false to close
+     */
 
     public static boolean replay(boolean won) {
         if (!won) return true;
@@ -68,16 +72,11 @@ public class PopUp {
         message.setText("Select the puzzle dimensions");
 
         TextField input = new TextField();
-        input.textProperty().addListener(new ChangeListener<String>() {
-            @Override
-            public void changed(ObservableValue<? extends String> observable, String oldValue,
-                                String newValue) {
-                if (!newValue.matches("\\d*")) {
-                    input.setText(newValue.replaceAll("[^\\d]", ""));
-                } else {
-                    dimensions = Integer.parseInt(newValue);
-                }
-            }
+        input.textProperty().addListener((ObservableValue<? extends String> observable, String prev, String next) -> {
+                if (!next.matches("\\d*"))
+                    input.setText(next.replaceAll("[^\\d]", ""));
+                else if (next.length() > 0)
+                    dimensions = Integer.parseInt(next);
         });
 
         Button play = new Button("OK");

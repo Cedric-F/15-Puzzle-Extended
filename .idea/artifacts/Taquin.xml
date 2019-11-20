@@ -1,6 +1,6 @@
 <component name="ArtifactManager">
   <artifact type="javafx" name="Taquin">
-    <output-path>D:/Taquin</output-path>
+    <output-path>$PROJECT_DIR$/out/artifacts/Taquin</output-path>
     <properties id="javafx-properties">
       <options>
         <option name="appClass" value="View.Main" />
