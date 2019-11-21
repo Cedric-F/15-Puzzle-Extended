@@ -18,7 +18,6 @@ import static javafx.scene.input.KeyCode.*;
 public class GridController {
     @FXML   private GridPane grid;
     private int dim;
-    private List<Integer> checker;
     private EmptyTile empty;
 
     /**
@@ -37,10 +36,7 @@ public class GridController {
      */
 
     public void preStart() {
-        System.out.println(grid.getParent());
         dim = PopUp.setSize();
-
-        checker = IntStream.range(1, (int) Math.pow(dim, 2) + 1).boxed().collect(Collectors.toList());
 
         grid.getChildren().clear();
         grid.setMaxWidth(dim * 50);
@@ -147,42 +143,48 @@ public class GridController {
 
         /* ---- If they are next to each other, remove them from the grid and add them back to their new position ---- */
         if (rowOffset == 0 && colOffset == 1 || rowOffset == 1 && colOffset == 0) {
-            grid.getChildren().remove(cell);
-            grid.getChildren().remove(empty);
+            grid.getChildren().removeAll(cell, empty);
             cell.setRow(empty.getRow());
             cell.setCol(empty.getCol());
-            cell.setOnMouseClicked(e -> swap(cell, empty));
+
             grid.add(cell, cell.getCol(), cell.getRow());
             empty.setRow(row);
             empty.setCol(col);
             grid.add(empty, empty.getCol(), empty.getRow());
-            checkConfig(col, row);
+            if (hasWon(col, row))
+                replay(true);
         }
     }
 
     /**
-     * Whenever the empty tile reaches the bottom right corner (only way one can win)
-     * Create a matrix representation of the grid's children (which is a List, so we need to bypass the layout constraint)
-     * Convert this 2d array into a string (e.g: "[[1, 2 3], [4, 5, 6], [7, 8, 9]]") and compare it to a finite ordered set of numbers
+     * Whenever the empty tile reaches the bottom right corner:
+     * Obtain the transpositions left in the grid.
+     * The game is won when there are no transpositions left.
+     *
      * @param row The new row value of the empty tile upon swap
      * @param col The new col value of the empty tile upon swap
      */
 
-    private void checkConfig(int row, int col) {
-        if (row == dim - 1 && col == dim - 1) { // bottom right corner
-            int[][] matrix = gridAsMatrix();
-
-
-            /* ---- If there is a match with the winning condition, finish the game and ask for a rematch ---- */
-            if (Arrays.toString(flatMatrix(matrix)).equals(Arrays.toString(checker.toArray()))) {
-                    replay(true);
-            }
-        }
+    private boolean hasWon(int row, int col) {
+        if (row == dim - 1 && col == dim - 1)
+            return getTranspositions(flatMatrix(gridAsMatrix())) == 0;
+        return false;
     }
+
+    /**
+     * This method flattens a multi dimensional array and returns it
+     * @param matrix is a 2d array
+     * @return a 1d array
+     */
 
     private int[] flatMatrix(int[][] matrix) {
         return Arrays.stream(matrix).flatMapToInt(Arrays::stream).toArray();
     }
+
+    /**
+     * Convert the grid into a matrix with the correct layout
+     * @return a 2d array
+     */
 
     private int[][] gridAsMatrix() {
         int[][] matrix = new int[dim][dim];
@@ -206,23 +208,50 @@ public class GridController {
 
 
     /**
-     * The puzzle is solvable only if the parity of the permutation is identical to the parity of the empty tile.
-     * https://en.wikipedia.org/wiki/15_puzzle
+     * You can say if a puzzle is solvable at the beginning.
+     * - If the grid's width is odd, the transpositions (number of (i, j) couples where i > j) are even
+     * - The the grid's width is even:
+     *      - The transpositions are odd and the empty tile is on an even row, counting from the bottom
+     *      - The transpositions are even and the empty tile on an odd row, counting from the bottom
      *
-     * @param matrix the grid in a flat array
+     *  A transposition occurs when on a flatten matrix, a number comes before a lesser number:
+     *  For instance: {1, 2, 4, 3, 7, 5, 6, 8, '_'} where '_' is the empty tile
+     *
+     *  4 comes before 3. (1 transposition)
+     *  7 comes before 5 and 6. (2 transposition)
+     *
+     *  A setup with no transposition would be a finite puzzle ({1, 2, 3, 4, 5, 6, 7, 8, '_'})
+     *
+     *  In the case above, the grid's width is odd (3 x 3) and the transpositions (parity) are odd, so this puzzle is not solvable
+     *
+     * @param matrix is the grid in a flat array
      * @return true if the puzzle is solvable
      */
     private boolean isSolvable(int[] matrix) {
+        int parity = getTranspositions(matrix);
+
+        return (dim % 2 == 0)
+                ? ((dim - empty.getRow()) % 2 != parity % 2)
+                : parity % 2 == 0;
+    }
+
+    /**
+     * Iterate over each element and check if they come before any lesser number (case for a transposition)
+     * Counts the transposed couples
+     *
+     * @param matrix the flatten grid
+     * @return the number of transposed couples
+     */
+
+    private int getTranspositions(int[] matrix) {
         int parity = 0;
 
         for (int i = 0; i < matrix.length; i++)
-            if (matrix[i] != empty.getValue()) // unless we reach the empty tile
-                for (int j = i + 1; j < matrix.length; j++) // check the pair (i, j) for transpositions
-                    if (matrix[i] > matrix[j] && matrix[j] != empty.getValue()) //
+            if (matrix[i] != empty.getValue())
+                for (int j = i + 1; j < matrix.length; j++)
+                    if (matrix[i] > matrix[j] && matrix[j] != empty.getValue())
                         parity++;
 
-        return (dim % 2 == 0)
-                ? (empty.getRow() + 1 % 2 == 0) == (parity % 2 == 0)
-                : parity % 2 == 0;
+        return parity;
     }
 }

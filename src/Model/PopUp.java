@@ -10,6 +10,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 
 public class PopUp {
 
@@ -28,6 +29,7 @@ public class PopUp {
         Stage window = new Stage();
 
         window.initModality(Modality.APPLICATION_MODAL);
+        window.initStyle(StageStyle.UNDECORATED);
         window.setTitle("You win!");
         window.setWidth(300);
         window.setHeight(150);
@@ -65,6 +67,7 @@ public class PopUp {
         Stage window = new Stage();
 
         window.initModality(Modality.APPLICATION_MODAL);
+
         window.setTitle("Settings");
         window.setWidth(300);
         window.setHeight(150);
@@ -73,18 +76,17 @@ public class PopUp {
 
         TextField input = new TextField();
         input.textProperty().addListener((ObservableValue<? extends String> observable, String prev, String next) -> {
-                if (!next.matches("\\d*"))
-                    input.setText(next.replaceAll("[^\\d]", ""));
-                else if (next.length() > 0)
-                    dimensions = Integer.parseInt(next);
+            if (!next.matches("\\d*"))
+                input.setText(next.replaceAll("[^\\d]", ""));
+            else if (next.length() > 0)
+                dimensions = Integer.parseInt(next);
         });
 
         Button play = new Button("OK");
 
         play.setOnAction(e -> {
-            if (dimensions >= 3 && dimensions <= 10) {
+            if (dimensions >= 3 && dimensions <= 10)
                 window.close();
-            }
         });
 
         VBox layout = new VBox(10);
@@ -94,7 +96,7 @@ public class PopUp {
         Scene scene = new Scene(layout);
         window.setScene(scene);
         window.showAndWait();
-
+        if (dimensions == 0) System.exit(0);
         return dimensions;
     }
 }

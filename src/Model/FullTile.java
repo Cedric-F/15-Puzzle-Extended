@@ -1,7 +1,7 @@
 package Model;
 
 public class FullTile extends Tile {
-    int value;
+    private int value;
     public FullTile(int c, int r, int v) {
         super();
         col = c;
